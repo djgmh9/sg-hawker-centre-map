@@ -11,6 +11,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+from functools import partial
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -100,6 +101,13 @@ def fetch_hawker_geojson() -> dict:
 class AppHandler(SimpleHTTPRequestHandler):
     """Serve static files and a local API proxy endpoint."""
 
+    def end_headers(self) -> None:
+        """Disable caching so frontend edits are visible immediately."""
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_GET(self) -> None:
         if self.path == API_PATH:
             self._handle_hawker_api()
@@ -127,7 +135,8 @@ class AppHandler(SimpleHTTPRequestHandler):
 
 def main() -> None:
     """Start local development server in project root."""
-    with ThreadingHTTPServer((HOST, PORT), AppHandler) as server:
+    handler_class = partial(AppHandler, directory=str(ROOT_DIR))
+    with ThreadingHTTPServer((HOST, PORT), handler_class) as server:
         print(f"Serving {ROOT_DIR} at http://{HOST}:{PORT}")
         server.serve_forever()
 
