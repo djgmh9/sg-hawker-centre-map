@@ -1,0 +1,11 @@
+# Local environment secrets
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+
+# docs
+docs/
+
+README.md
