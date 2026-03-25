@@ -40,9 +40,9 @@ function detailsHtml(feature) {
   const name = escapeHtml(properties.NAME || "Unknown hawker centre");
   const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
-  const postal = escapeHtml(
-    properties.ADDRESSPOSTALCODE || "Unknown postal code"
-  );
+  // const postal = escapeHtml(
+  //   properties.ADDRESSPOSTALCODE || "Unknown postal code"
+  // );
   const lat = Number(feature.location?.lat);
   const lng = Number(feature.location?.lng);
   const location =
@@ -62,10 +62,6 @@ function detailsHtml(feature) {
         <dd>${address}</dd>
       </div>
       <div>
-        <dt>Postal</dt>
-        <dd>${postal}</dd>
-      </div>
-      <div>
         <dt>Coordinates</dt>
         <dd>${location}</dd>
       </div>
@@ -73,19 +69,13 @@ function detailsHtml(feature) {
   `;
 }
 
-function popupHtml(properties) {
+function tooltipHtml(properties) {
   const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
-  const name = escapeHtml(properties.NAME || "Unknown hawker centre");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
-  const postal = escapeHtml(
-    properties.ADDRESSPOSTALCODE || "Unknown postal code"
-  );
 
   return `
-    <h3 class="popup-title">${name}</h3>
-    <p class="popup-body"><strong>Building:</strong> ${buildingName}</p>
-    <p class="popup-body">${address}</p>
-    <p class="popup-body"><strong>Postal:</strong> ${postal}</p>
+    <p class="tooltip-title">${buildingName}</p>
+    <p class="tooltip-body">${address}</p>
   `;
 }
 
@@ -134,6 +124,33 @@ export class HawkerMapView {
     return features.find((feature) => feature.id === id) || null;
   }
 
+  getTooltipDirection(lat, lng) {
+    const mapSize = this.map.getSize();
+    const point = this.map.latLngToContainerPoint([lat, lng]);
+    const edgePadding = 24;
+    const estimatedTooltipWidth = 220;
+    const estimatedTooltipHeight = 70;
+
+    const spaceRight = mapSize.x - point.x - edgePadding;
+    const spaceLeft = point.x - edgePadding;
+    const spaceTop = point.y - edgePadding;
+    const spaceBottom = mapSize.y - point.y - edgePadding;
+
+    if (spaceTop >= estimatedTooltipHeight) {
+      return "top";
+    }
+
+    if (spaceBottom >= estimatedTooltipHeight) {
+      return "bottom";
+    }
+
+    if (spaceRight >= estimatedTooltipWidth || spaceRight >= spaceLeft) {
+      return "right";
+    }
+
+    return "left";
+  }
+
   autoFocus(features, shouldFocus) {
     if (!shouldFocus || features.length === 0) {
       return;
@@ -176,9 +193,14 @@ export class HawkerMapView {
         const { lat, lng } = feature.location;
         const marker = L.marker([lat, lng]);
 
-        marker.bindPopup(popupHtml(feature.properties));
-        marker.on("mouseover", () => marker.openPopup());
-        marker.on("mouseout", () => marker.closePopup());
+        marker.bindTooltip(tooltipHtml(feature.properties), {
+          direction: this.getTooltipDirection(lat, lng),
+          offset: [0, -10],
+          className: "hawker-tooltip",
+          opacity: 0.96,
+        });
+        marker.on("mouseover", () => marker.openTooltip());
+        marker.on("mouseout", () => marker.closeTooltip());
         marker.on("click", () => {
           this.selectedFeatureId = feature.id;
           this.updateDetails(feature);

@@ -18,10 +18,7 @@ body {
   min-height: 100vh;
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
-  background:
-    radial-gradient(1200px 800px at 85% 10%, rgba(255, 148, 0, 0.22), transparent 58%),
-    radial-gradient(900px 700px at 10% 90%, rgba(15, 123, 108, 0.2), transparent 56%),
-    linear-gradient(145deg, var(--bg-1), var(--bg-2));
+  background: var(--bg-1);
 }
 
 .app-shell {
@@ -164,6 +161,27 @@ h1 {
   margin: 0;
   font-size: 0.9rem;
   color: #2f2c23;
+}
+
+.leaflet-tooltip.hawker-tooltip {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(79, 51, 19, 0.16);
+  background: rgba(255, 251, 243, 0.97);
+  color: #2f2c23;
+  padding: 0.45rem 0.6rem;
+}
+
+.tooltip-title {
+  margin: 0;
+  font-family: "DM Serif Display", serif;
+  font-size: 0.98rem;
+  line-height: 1.15;
+}
+
+.tooltip-body {
+  margin: 0.1rem 0 0;
+  font-size: 0.82rem;
 }
 
 .leaflet-popup-content-wrapper {
