@@ -124,31 +124,31 @@ export class HawkerMapView {
     return features.find((feature) => feature.id === id) || null;
   }
 
-  getTooltipDirection(lat, lng) {
+  getTooltipPlacement(lat, lng) {
     const mapSize = this.map.getSize();
     const point = this.map.latLngToContainerPoint([lat, lng]);
-    const edgePadding = 24;
-    const estimatedTooltipWidth = 220;
-    const estimatedTooltipHeight = 70;
+    const edgePadding = 16;
+    const verticalThreshold = 96;
+    const horizontalThreshold = 240;
 
-    const spaceRight = mapSize.x - point.x - edgePadding;
-    const spaceLeft = point.x - edgePadding;
-    const spaceTop = point.y - edgePadding;
-    const spaceBottom = mapSize.y - point.y - edgePadding;
-
-    if (spaceTop >= estimatedTooltipHeight) {
-      return "top";
+    // For markers near top border, force bottom placement.
+    if (point.y <= edgePadding + verticalThreshold) {
+      return { direction: "bottom", offset: [0, 12] };
     }
 
-    if (spaceBottom >= estimatedTooltipHeight) {
-      return "bottom";
+    if (mapSize.y - point.y <= edgePadding + verticalThreshold) {
+      return { direction: "top", offset: [0, -12] };
     }
 
-    if (spaceRight >= estimatedTooltipWidth || spaceRight >= spaceLeft) {
-      return "right";
+    if (point.x <= edgePadding + horizontalThreshold) {
+      return { direction: "right", offset: [12, 0] };
     }
 
-    return "left";
+    if (mapSize.x - point.x <= edgePadding + horizontalThreshold) {
+      return { direction: "left", offset: [-12, 0] };
+    }
+
+    return { direction: "top", offset: [0, -12] };
   }
 
   autoFocus(features, shouldFocus) {
@@ -192,14 +192,28 @@ export class HawkerMapView {
       .map((feature) => {
         const { lat, lng } = feature.location;
         const marker = L.marker([lat, lng]);
+        const initialPlacement = this.getTooltipPlacement(lat, lng);
 
         marker.bindTooltip(tooltipHtml(feature.properties), {
-          direction: this.getTooltipDirection(lat, lng),
-          offset: [0, -10],
+          direction: initialPlacement.direction,
+          offset: initialPlacement.offset,
           className: "hawker-tooltip",
           opacity: 0.96,
         });
-        marker.on("mouseover", () => marker.openTooltip());
+        marker.on("mouseover", () => {
+          const placement = this.getTooltipPlacement(lat, lng);
+          const tooltip = marker.getTooltip();
+
+          if (tooltip) {
+            tooltip.options.direction = placement.direction;
+            tooltip.options.offset = L.point(
+              placement.offset[0],
+              placement.offset[1]
+            );
+          }
+
+          marker.openTooltip();
+        });
         marker.on("mouseout", () => marker.closeTooltip());
         marker.on("click", () => {
           this.selectedFeatureId = feature.id;
