@@ -18,10 +18,10 @@ function buildAddress(properties) {
   }
 
   const block = String(
-    properties.ADDRESSBLOCKHOUSENUMBER || properties.BLOCK || ""
+    properties.ADDRESSBLOCKHOUSENUMBER || ""
   ).trim();
   const street = String(
-    properties.ADDRESSSTREETNAME || properties.STREETNAME || ""
+    properties.ADDRESSSTREETNAME || ""
   ).trim();
   const postal = String(properties.ADDRESSPOSTALCODE || "").trim();
 
@@ -70,11 +70,11 @@ function detailsHtml(feature) {
 }
 
 function tooltipHtml(properties) {
-  const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
+  const name = escapeHtml(properties.NAME || "Unknown hawker centre");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
 
   return `
-    <p class="tooltip-title">${buildingName}</p>
+    <p class="tooltip-title">${name}</p>
     <p class="tooltip-body">${address}</p>
   `;
 }
@@ -128,25 +128,13 @@ export class HawkerMapView {
     const mapSize = this.map.getSize();
     const point = this.map.latLngToContainerPoint([lat, lng]);
     const edgePadding = 16;
-    const verticalThreshold = 96;
     const horizontalThreshold = 240;
 
-    // For markers near top border, force bottom placement.
-    if (point.y <= edgePadding + verticalThreshold) {
-      return { direction: "bottom", offset: [0, 12] };
-    }
+    const isLeft = point.x <= edgePadding + horizontalThreshold;
+    const isRight = mapSize.x - point.x <= edgePadding + horizontalThreshold;
 
-    if (mapSize.y - point.y <= edgePadding + verticalThreshold) {
-      return { direction: "top", offset: [0, -12] };
-    }
-
-    if (point.x <= edgePadding + horizontalThreshold) {
-      return { direction: "right", offset: [12, 0] };
-    }
-
-    if (mapSize.x - point.x <= edgePadding + horizontalThreshold) {
-      return { direction: "left", offset: [-12, 0] };
-    }
+    if (isLeft) return { direction: "right", offset: [12, 0] };
+    if (isRight) return { direction: "left", offset: [-12, 0] };
 
     return { direction: "top", offset: [0, -12] };
   }
