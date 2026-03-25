@@ -28,25 +28,6 @@ function buildAddress(properties) {
   return [block, street, postal].filter(Boolean).join(" ");
 }
 
-function readFirstNonEmpty(properties, keys, fallback = "") {
-  for (const key of keys) {
-    const value = properties?.[key];
-    if (value && String(value).trim()) {
-      return String(value).trim();
-    }
-  }
-
-  return fallback;
-}
-
-function getBuildingName(properties) {
-  return readFirstNonEmpty(
-    properties,
-    ["ADDRESSBUILDINGNAME", "BUILDINGNAME", "BUILDING", "BLOCK"],
-    "Unknown building"
-  );
-}
-
 function detailsHtml(feature) {
   if (!feature) {
     return `
@@ -57,10 +38,10 @@ function detailsHtml(feature) {
 
   const properties = feature.properties || {};
   const name = escapeHtml(properties.NAME || "Unknown hawker centre");
-  const buildingName = escapeHtml(getBuildingName(properties));
+  const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
   const postal = escapeHtml(
-    readFirstNonEmpty(properties, ["ADDRESSPOSTALCODE"], "Unknown postal code")
+    properties.ADDRESSPOSTALCODE || "Unknown postal code"
   );
   const lat = Number(feature.location?.lat);
   const lng = Number(feature.location?.lng);
@@ -93,7 +74,7 @@ function detailsHtml(feature) {
 }
 
 function popupHtml(properties) {
-  const buildingName = escapeHtml(getBuildingName(properties));
+  const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
   const name = escapeHtml(properties.NAME || "Unknown hawker centre");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
   const postal = escapeHtml(
