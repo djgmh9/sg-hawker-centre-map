@@ -2,7 +2,7 @@ import { fetchHawkerGeoJson } from "./services/apiService.js";
 import { fetchBoundaryGeoJson } from "./services/boundaryService.js";
 import { buildGeoScopeIndex } from "./state/geoScope.js";
 import { normalizeHawkerFeatures } from "./state/featureNormalizer.js";
-import { HawkerStore } from "./state/store.js";
+import { HAWKER_ACTION_TYPES, HawkerStore } from "./state/store.js";
 import { HawkerMapView } from "./ui/mapView.js";
 import { setupSearchView } from "./ui/searchView.js";
 import { renderSearchResults } from "./ui/searchResultsView.js";
@@ -31,10 +31,18 @@ async function bootstrap() {
   syncDetailsPanelHeight();
   window.addEventListener("resize", syncDetailsPanelHeight);
 
+  const dispatchFeatureSelection = (feature, meta = {}) => {
+    store.dispatch({
+      type: HAWKER_ACTION_TYPES.SELECT_FEATURE,
+      payload: { featureId: feature?.id || null },
+      meta,
+    });
+  };
+
   let loading = true;
   let error = "";
 
-  store.subscribe((state) => {
+  store.subscribe((state, action) => {
     syncDetailsPanelHeight();
 
     const hasSearchText = Boolean(state.searchText.trim());
@@ -44,13 +52,10 @@ async function bootstrap() {
       activeGeoScope: state.activeGeoScope,
       selectedFeatureId: state.selectedFeatureId,
       onSelect: (feature, options = {}) => {
-        store.setSelectedFeatureId(feature.id);
-
-        if (options.shouldPan) {
-          mapView.revealFeature(feature, {
-            shouldPan: true,
-          });
-        }
+        dispatchFeatureSelection(feature, {
+          shouldPan: Boolean(options.shouldPan),
+          source: "map",
+        });
       },
     });
 
@@ -59,12 +64,27 @@ async function bootstrap() {
       features: state.filteredList,
       selectedFeatureId: state.selectedFeatureId,
       onSelect: (feature) => {
-        store.setSelectedFeatureId(feature.id);
-        mapView.revealFeature(feature, {
+        dispatchFeatureSelection(feature, {
           shouldPan: true,
+          source: "results-list",
         });
       },
     });
+
+    if (
+      action?.type === HAWKER_ACTION_TYPES.SELECT_FEATURE &&
+      action.meta?.shouldPan
+    ) {
+      const selectedFeature = state.filteredList.find(
+        (feature) => feature.id === state.selectedFeatureId
+      );
+
+      if (selectedFeature) {
+        mapView.revealFeature(selectedFeature, {
+          shouldPan: true,
+        });
+      }
+    }
 
     renderStatusMessage(statusElement, {
       loading,
@@ -80,7 +100,10 @@ async function bootstrap() {
   setupSearchView({
     inputElement: searchInput,
     onSearch: (value) => {
-      store.applyFilter(value);
+      store.dispatch({
+        type: HAWKER_ACTION_TYPES.APPLY_FILTER,
+        payload: { text: value },
+      });
     },
   });
 
