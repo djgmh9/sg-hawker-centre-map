@@ -1,4 +1,6 @@
 import { fetchHawkerGeoJson } from "./services/apiService.js";
+import { fetchBoundaryGeoJson } from "./services/boundaryService.js";
+import { buildGeoScopeIndex } from "./state/geoScope.js";
 import { HawkerStore } from "./state/store.js";
 import { HawkerMapView } from "./ui/mapView.js";
 import { setupSearchView, buildStatusMessage } from "./ui/searchView.js";
@@ -44,6 +46,8 @@ function updateStatus({
   totalCount,
   shownCount,
   searchText,
+  activeGeoScope,
+  residualKeyword,
 }) {
   statusElement.textContent = buildStatusMessage({
     loading,
@@ -51,6 +55,8 @@ function updateStatus({
     totalCount,
     shownCount,
     searchText,
+    activeGeoScope,
+    residualKeyword,
   });
 }
 
@@ -71,6 +77,7 @@ async function bootstrap() {
 
     mapView.render(state.filteredList, {
       shouldAutoFocus: hasSearchText,
+      activeGeoScope: state.activeGeoScope,
     });
 
     updateStatus({
@@ -80,6 +87,8 @@ async function bootstrap() {
       totalCount: state.masterList.length,
       shownCount: state.filteredList.length,
       searchText: state.searchText,
+      activeGeoScope: state.activeGeoScope,
+      residualKeyword: state.residualKeyword,
     });
   });
 
@@ -91,8 +100,14 @@ async function bootstrap() {
   });
 
   try {
-    const geoJson = await fetchHawkerGeoJson();
+    const [geoJson, boundaryGeoJson] = await Promise.all([
+      fetchHawkerGeoJson(),
+      fetchBoundaryGeoJson(),
+    ]);
+    const geoScopeIndex = buildGeoScopeIndex(boundaryGeoJson);
     const normalized = normalizeFeatures(geoJson);
+
+    store.setGeoScopeIndex(geoScopeIndex);
     store.setMasterList(normalized);
   } catch (err) {
     error = err instanceof Error ? err.message : "Unknown error";
@@ -106,6 +121,8 @@ async function bootstrap() {
       totalCount: state.masterList.length,
       shownCount: state.filteredList.length,
       searchText: state.searchText,
+      activeGeoScope: state.activeGeoScope,
+      residualKeyword: state.residualKeyword,
     });
   }
 }

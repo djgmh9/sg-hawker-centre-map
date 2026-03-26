@@ -11,8 +11,12 @@ Detailed architecture documentation: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md
 - Data.gov.sg two-step Poll-Download handshake
 - Fetch-once, filter-local state model
 - Case-insensitive search by hawker centre `NAME` or `ADDRESSPOSTALCODE`
+- Search by official region/area boundaries from local Master Plan 2019 GeoJSON files
+- Combined scope + keyword queries (for example: central + maxwell, bedok market)
 - Dynamic marker updates while typing
 - Marker clustering with `leaflet.markercluster`
+- Boundary highlight overlay for matched region/area searches
+- Active scope chip shown on map when a region/planning area query is detected
 - Loading, error, and empty-search-result states
 
 ## Project Structure
