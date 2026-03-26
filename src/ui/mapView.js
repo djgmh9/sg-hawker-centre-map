@@ -42,6 +42,7 @@ function detailsHtml(feature) {
   const properties = feature.properties || {};
   const name = escapeHtml(properties.NAME || "Unknown hawker centre");
   const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
+  const numberOfCookedFoodStalls = escapeHtml(properties.NUMBER_OF_COOKED_FOOD_STALLS || "N/A");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
   // const postal = escapeHtml(
   //   properties.ADDRESSPOSTALCODE || "Unknown postal code"
@@ -63,6 +64,10 @@ function detailsHtml(feature) {
       <div>
         <dt>Address</dt>
         <dd>${address}</dd>
+      </div>
+      <div>
+        <dt>Number of Cooked Food Stalls</dt>
+        <dd>${numberOfCookedFoodStalls}</dd>
       </div>
       <div>
         <dt>Coordinates</dt>
