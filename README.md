@@ -38,7 +38,7 @@ npm install
 ### Configure environment
 
 1. Copy `.env.example` to `.env.local`.
-2. Set your data.gov.sg API key:
+2. Optionally set your data.gov.sg API key:
 
 ```env
 DATA_GOV_SG_API_KEY=your_key_here
@@ -56,6 +56,7 @@ Notes:
 
 - `server.py` is recommended because it proxies data.gov.sg and avoids browser CORS issues for temporary URLs.
 - Do not expose your API key in frontend code.
+- API key is optional: proxy requests work without it, but upstream data.gov.sg rate limits are lower without a key.
 
 ## Testing Instructions
 
@@ -73,7 +74,8 @@ Current test coverage includes:
 
 ## Assumptions / Challenges
 
-- data.gov.sg rate limits apply to requests made by your backend API key, so all users share that quota when routed through this server.
+- data.gov.sg rate limits apply to upstream requests made by this backend proxy; all users share that quota for this deployment.
+- Running without an API key still works, but at a lower rate-limit tier than requests made with a key.
 - The app uses in-memory fetch/filter (no database), so large dataset scaling is bounded by browser memory and CPU.
 - UI split-panel sizing requires explicit sync logic because left and right panes are independent grid children.
 - Status taxonomy may grow over time; unknown statuses are supported with a fallback style and filter match.
