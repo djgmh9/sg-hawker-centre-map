@@ -1,5 +1,5 @@
 const SG_CENTER = [1.3521, 103.8198];
-const SG_ZOOM = 12;
+const SG_ZOOM = 11;
 
 function escapeHtml(value) {
   return String(value)
