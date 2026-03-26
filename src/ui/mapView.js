@@ -31,6 +31,29 @@ function buildAddress(properties) {
   return [block, street, postal].filter(Boolean).join(" ");
 }
 
+function getStatusMeta(statusValue) {
+  const label = String(statusValue || "Unknown status").trim() || "Unknown status";
+  const normalized = label.toLowerCase();
+
+  if (normalized === "under construction") {
+    return { label, tone: "construction", isUnderConstruction: true };
+  }
+
+  if (normalized === "existing (replacement)") {
+    return { label, tone: "replacement", isUnderConstruction: false };
+  }
+
+  if (normalized === "existing (new)") {
+    return { label, tone: "new", isUnderConstruction: false };
+  }
+
+  if (normalized.startsWith("existing")) {
+    return { label, tone: "existing", isUnderConstruction: false };
+  }
+
+  return { label, tone: "unknown", isUnderConstruction: false };
+}
+
 function detailsHtml(feature) {
   if (!feature) {
     return `
@@ -48,6 +71,13 @@ function detailsHtml(feature) {
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
   const mapsQuery = postalRaw ? `${postalRaw} Singapore` : buildAddress(properties);
   const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery || "Singapore")}`;
+  const rawStatus = properties.STATUS || properties.status;
+  const statusMeta = getStatusMeta(rawStatus);
+  const statusLabel = escapeHtml(statusMeta.label);
+  const statusToneClass = `status-chip--${statusMeta.tone}`;
+  const estimatedCompletion = escapeHtml(
+    String(properties.EST_ORIGINAL_COMPLETION_DATE || "TBC")
+  );
   const lat = Number(feature.location?.lat);
   const lng = Number(feature.location?.lng);
   const location =
@@ -70,6 +100,23 @@ function detailsHtml(feature) {
       </a>
     </p>
     <dl class="details-grid">
+      <div>
+        <dt>Status</dt>
+        <dd>
+          <span class="status-chip ${statusToneClass}">
+            <span class="status-chip-dot" aria-hidden="true"></span>
+            ${statusLabel}
+          </span>
+        </dd>
+      </div>
+      ${statusMeta.isUnderConstruction
+        ? `
+      <div>
+        <dt>Est. Original Completion</dt>
+        <dd>${estimatedCompletion}</dd>
+      </div>
+      `
+        : ""}
       <div>
         <dt>Building</dt>
         <dd>${buildingName}</dd>

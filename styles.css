@@ -288,6 +288,56 @@ h1 {
   line-height: 1.35;
 }
 
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(106, 96, 78, 0.28);
+  background: rgba(106, 96, 78, 0.08);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-chip-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75);
+}
+
+.status-chip--existing {
+  color: #156b41;
+  border-color: rgba(21, 107, 65, 0.35);
+  background: rgba(21, 107, 65, 0.12);
+}
+
+.status-chip--replacement {
+  color: #216073;
+  border-color: rgba(33, 96, 115, 0.35);
+  background: rgba(33, 96, 115, 0.12);
+}
+
+.status-chip--new {
+  color: #23559d;
+  border-color: rgba(35, 85, 157, 0.35);
+  background: rgba(35, 85, 157, 0.12);
+}
+
+.status-chip--construction {
+  color: #a05a00;
+  border-color: rgba(160, 90, 0, 0.35);
+  background: rgba(160, 90, 0, 0.14);
+}
+
+.status-chip--unknown {
+  color: #6a604e;
+  border-color: rgba(106, 96, 78, 0.28);
+  background: rgba(106, 96, 78, 0.08);
+}
+
 .details-actions {
   margin: 0.7rem 0 0;
 }

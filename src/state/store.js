@@ -50,12 +50,16 @@ function withFilterState(state, text = "") {
     const building = String(centre.properties.ADDRESSBUILDINGNAME || "").toLowerCase();
     const street = String(centre.properties.ADDRESSSTREETNAME || "").toLowerCase();
     const fullAddress = String(centre.properties.ADDRESS_MYENV || "").toLowerCase();
+    const status = String(
+      centre.properties.status || centre.properties.STATUS || ""
+    ).toLowerCase();
     return (
       name.includes(textKeyword) ||
       postal.includes(textKeyword) ||
       building.includes(textKeyword) ||
       street.includes(textKeyword) ||
-      fullAddress.includes(textKeyword)
+      fullAddress.includes(textKeyword) ||
+      status.includes(textKeyword)
     );
   });
 
