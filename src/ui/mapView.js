@@ -129,7 +129,7 @@ export class HawkerMapView {
     });
   }
 
-  focusFeature(feature, { shouldPan = false, targetZoom = 16 } = {}) {
+  focusFeature(feature, { shouldPan = false } = {}) {
     if (!feature) {
       return;
     }
@@ -144,16 +144,6 @@ export class HawkerMapView {
 
     const openMarkerTooltip = () => {
       marker.openTooltip();
-
-      if (!shouldPan) {
-        return;
-      }
-
-      const { lat, lng } = feature.location;
-      this.map.flyTo([lat, lng], Math.max(this.map.getZoom(), targetZoom), {
-        animate: true,
-        duration: 0.35,
-      });
     };
 
     if (shouldPan) {
