@@ -1,11 +1,4 @@
-function normalizeText(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/[+/,]+/g, " ")
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+import { normalizeSearchText } from "../utils/query.js";
 
 function extractFeatureName(feature, keys) {
   const properties = feature?.properties || {};
@@ -22,7 +15,7 @@ function extractFeatureName(feature, keys) {
 
 function buildRegionTerms(regionName) {
   const terms = new Set();
-  const normalized = normalizeText(regionName);
+  const normalized = normalizeSearchText(regionName);
 
   if (normalized) {
     terms.add(normalized);
@@ -42,7 +35,7 @@ function buildRegionTerms(regionName) {
 
 function buildAreaTerms(areaName) {
   const terms = new Set();
-  const normalized = normalizeText(areaName);
+  const normalized = normalizeSearchText(areaName);
 
   if (normalized) {
     terms.add(normalized);
@@ -212,7 +205,7 @@ function toRegionEntry(feature) {
   }
 
   return {
-    id: `region:${normalizeText(regionName)}`,
+    id: `region:${normalizeSearchText(regionName)}`,
     type: "region",
     name: regionName,
     regionName,
@@ -230,7 +223,7 @@ function toPlanningAreaEntry(feature) {
   }
 
   return {
-    id: `planning-area:${normalizeText(areaName)}`,
+    id: `planning-area:${normalizeSearchText(areaName)}`,
     type: "planning-area",
     name: areaName,
     regionName,
@@ -259,7 +252,7 @@ export function buildGeoScopeIndex({ regionGeoJson, planningAreaGeoJson }) {
 }
 
 export function parseScopedSearch(query, geoScopeIndex) {
-  const normalizedQuery = normalizeText(query);
+  const normalizedQuery = normalizeSearchText(query);
 
   if (!normalizedQuery || !geoScopeIndex) {
     return {

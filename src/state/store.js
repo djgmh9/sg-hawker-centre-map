@@ -1,4 +1,5 @@
 import { isCentreInsideScope, parseScopedSearch } from "./geoScope.js";
+import { normalizeSearchText } from "../utils/query.js";
 
 export class HawkerStore {
   constructor() {
@@ -29,12 +30,7 @@ export class HawkerStore {
 
   applyFilter(text = "") {
     this.searchText = text;
-    const normalizedQuery = String(text || "")
-      .toLowerCase()
-      .replace(/[+/,]+/g, " ")
-      .replace(/-/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    const normalizedQuery = normalizeSearchText(text);
 
     const { activeGeoScope, residualKeyword } = parseScopedSearch(
       normalizedQuery,

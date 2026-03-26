@@ -1,64 +1,11 @@
 import { fetchHawkerGeoJson } from "./services/apiService.js";
 import { fetchBoundaryGeoJson } from "./services/boundaryService.js";
 import { buildGeoScopeIndex } from "./state/geoScope.js";
+import { normalizeHawkerFeatures } from "./state/featureNormalizer.js";
 import { HawkerStore } from "./state/store.js";
 import { HawkerMapView } from "./ui/mapView.js";
-import { setupSearchView, buildStatusMessage } from "./ui/searchView.js";
-
-function normalizeFeatures(geoJson) {
-  const rawFeatures = geoJson?.features;
-
-  if (!Array.isArray(rawFeatures)) {
-    return [];
-  }
-
-  return rawFeatures
-    .map((feature, index) => {
-      const coords = feature?.geometry?.coordinates;
-
-      if (!Array.isArray(coords) || coords.length < 2) {
-        return null;
-      }
-
-      const [lng, lat] = coords;
-
-      if (typeof lat !== "number" || typeof lng !== "number") {
-        return null;
-      }
-
-      const properties = feature.properties || {};
-      const name = String(properties.NAME || "").trim() || "unknown";
-      const postal = String(properties.ADDRESSPOSTALCODE || "").trim() || "na";
-
-      return {
-        id: `${name}-${postal}-${lat}-${lng}-${index}`,
-        properties,
-        location: { lat, lng },
-      };
-    })
-    .filter(Boolean);
-}
-
-function updateStatus({
-  statusElement,
-  loading,
-  error,
-  totalCount,
-  shownCount,
-  searchText,
-  activeGeoScope,
-  residualKeyword,
-}) {
-  statusElement.textContent = buildStatusMessage({
-    loading,
-    error,
-    totalCount,
-    shownCount,
-    searchText,
-    activeGeoScope,
-    residualKeyword,
-  });
-}
+import { setupSearchView } from "./ui/searchView.js";
+import { renderStatusMessage } from "./ui/statusView.js";
 
 async function bootstrap() {
   const statusElement = document.getElementById("statusMessage");
@@ -80,8 +27,7 @@ async function bootstrap() {
       activeGeoScope: state.activeGeoScope,
     });
 
-    updateStatus({
-      statusElement,
+    renderStatusMessage(statusElement, {
       loading,
       error,
       totalCount: state.masterList.length,
@@ -105,7 +51,7 @@ async function bootstrap() {
       fetchBoundaryGeoJson(),
     ]);
     const geoScopeIndex = buildGeoScopeIndex(boundaryGeoJson);
-    const normalized = normalizeFeatures(geoJson);
+    const normalized = normalizeHawkerFeatures(geoJson);
 
     store.setGeoScopeIndex(geoScopeIndex);
     store.setMasterList(normalized);
@@ -114,8 +60,7 @@ async function bootstrap() {
   } finally {
     loading = false;
     const state = store.getState();
-    updateStatus({
-      statusElement,
+    renderStatusMessage(statusElement, {
       loading,
       error,
       totalCount: state.masterList.length,
