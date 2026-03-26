@@ -75,6 +75,7 @@ Current test coverage includes:
 ## Assumptions / Challenges
 
 - data.gov.sg rate limits apply to upstream requests made by this backend proxy; all users share that quota for this deployment.
+- Region/area filtering is based on Master Plan 2019 data, which is stable for the foreseeable future, so the app uses local GeoJSON files instead of live API lookups.
 - Running without an API key still works, but at a lower rate-limit tier than requests made with a key.
 - The app uses in-memory fetch/filter (no database), so large dataset scaling is bounded by browser memory and CPU.
 - UI split-panel sizing requires explicit sync logic because left and right panes are independent grid children.
