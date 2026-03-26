@@ -160,6 +160,66 @@ function removeFirstTerm(input, term) {
   return `${before} ${after}`.trim().replace(/\s+/g, " ");
 }
 
+function isCompatibleScope(activeGeoScope, candidateScope) {
+  if (!activeGeoScope || !candidateScope) {
+    return false;
+  }
+
+  if (activeGeoScope.id === candidateScope.id) {
+    return true;
+  }
+
+  if (
+    activeGeoScope.type === "planning-area" &&
+    candidateScope.type === "region"
+  ) {
+    return candidateScope.name === activeGeoScope.regionName;
+  }
+
+  if (
+    activeGeoScope.type === "region" &&
+    candidateScope.type === "planning-area"
+  ) {
+    return candidateScope.regionName === activeGeoScope.name;
+  }
+
+  return false;
+}
+
+function stripCompatibleScopeTerms(residualKeyword, activeGeoScope, geoScopeIndex) {
+  if (!residualKeyword || !activeGeoScope || !geoScopeIndex) {
+    return residualKeyword;
+  }
+
+  let cleaned = residualKeyword;
+  let changed = true;
+
+  while (changed && cleaned) {
+    changed = false;
+    const wrapped = ` ${cleaned} `;
+
+    for (const { term, entryId } of geoScopeIndex.lookupTerms) {
+      if (!wrapped.includes(` ${term} `)) {
+        continue;
+      }
+
+      const candidateScope = geoScopeIndex.entriesById.get(entryId);
+      if (!isCompatibleScope(activeGeoScope, candidateScope)) {
+        continue;
+      }
+
+      const next = removeFirstTerm(cleaned, term);
+      if (next !== cleaned) {
+        cleaned = next;
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  return cleaned;
+}
+
 function toRegionEntry(feature) {
   const regionName = extractFeatureName(feature, ["REGION_N"]);
   if (!regionName) {
@@ -236,7 +296,11 @@ export function parseScopedSearch(query, geoScopeIndex) {
   }
 
   const activeGeoScope = geoScopeIndex.entriesById.get(match.entryId) || null;
-  const residualKeyword = removeFirstTerm(normalizedQuery, match.term);
+  const residualKeyword = stripCompatibleScopeTerms(
+    removeFirstTerm(normalizedQuery, match.term),
+    activeGeoScope,
+    geoScopeIndex
+  );
 
   return {
     activeGeoScope,
