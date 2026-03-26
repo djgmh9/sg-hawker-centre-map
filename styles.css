@@ -288,6 +288,33 @@ h1 {
   line-height: 1.35;
 }
 
+.details-actions {
+  margin: 0.7rem 0 0;
+}
+
+.details-map-link {
+  display: inline-block;
+  padding: 0.42rem 0.66rem;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 123, 108, 0.4);
+  color: #145f53;
+  background: rgba(15, 123, 108, 0.08);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+.details-map-link:hover {
+  background: rgba(15, 123, 108, 0.15);
+  border-color: rgba(15, 123, 108, 0.65);
+}
+
+.details-map-link:focus-visible {
+  outline: 2px solid rgba(15, 123, 108, 0.45);
+  outline-offset: 1px;
+}
+
 .popup-title {
   margin: 0 0 0.3rem;
   font-family: "DM Serif Display", serif;

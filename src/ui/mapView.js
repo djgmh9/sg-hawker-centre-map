@@ -43,10 +43,11 @@ function detailsHtml(feature) {
   const name = escapeHtml(properties.NAME || "Unknown hawker centre");
   const buildingName = escapeHtml(properties.ADDRESSBUILDINGNAME || "Unknown building");
   const numberOfCookedFoodStalls = escapeHtml(properties.NUMBER_OF_COOKED_FOOD_STALLS || "N/A");
+  const postalRaw = String(properties.ADDRESSPOSTALCODE || "").trim();
+  const postal = escapeHtml(postalRaw || "Unknown postal code");
   const address = escapeHtml(buildAddress(properties) || "Address unavailable");
-  // const postal = escapeHtml(
-  //   properties.ADDRESSPOSTALCODE || "Unknown postal code"
-  // );
+  const mapsQuery = postalRaw ? `${postalRaw} Singapore` : buildAddress(properties);
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery || "Singapore")}`;
   const lat = Number(feature.location?.lat);
   const lng = Number(feature.location?.lng);
   const location =
@@ -74,6 +75,18 @@ function detailsHtml(feature) {
         <dd>${location}</dd>
       </div>
     </dl>
+    <p class="details-actions">
+      <a
+        class="details-map-link"
+        href="${mapsHref}"
+        target="_blank"
+        rel="noopener noreferrer"
+        accesskey="g"
+        aria-label="Open this hawker centre in Google Maps"
+      >
+        Open in Google Maps
+      </a>
+    </p>
   `;
 }
 
