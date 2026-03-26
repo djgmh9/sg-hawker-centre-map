@@ -94,7 +94,6 @@ export class HawkerMapView {
         ? document.getElementById(detailsElementId)
         : null;
     this.selectedFeatureId = null;
-    this.lastAutoFocusKey = "";
     this.markersByFeatureId = new Map();
     this.markerStyleView = new MarkerStyleView();
 
@@ -129,10 +128,18 @@ export class HawkerMapView {
     });
   }
 
+  closeAllTooltips() {
+    this.markersByFeatureId.forEach((marker) => {
+      marker.closeTooltip();
+    });
+  }
+
   focusFeature(feature, { shouldPan = false } = {}) {
     if (!feature) {
       return;
     }
+
+    this.closeAllTooltips();
 
     this.updateSelectedMarker(feature.id);
     this.updateDetails(feature);
@@ -185,21 +192,36 @@ export class HawkerMapView {
     return { direction: "top", offset: [0, -12] };
   }
 
+  shouldMoveToSingleFeature(feature, targetZoom = 16) {
+    const target = L.latLng(feature.location.lat, feature.location.lng);
+    const currentCenter = this.map.getCenter();
+    const distanceToTarget = this.map.distance(currentCenter, target);
+    const zoomReached = this.map.getZoom() >= targetZoom;
+
+    return distanceToTarget > 20 || !zoomReached;
+  }
+
+  shouldMoveToBounds(bounds) {
+    const currentBounds = this.map.getBounds();
+    const targetCenter = bounds.getCenter();
+    const currentCenter = currentBounds.getCenter();
+    const centerDistance = this.map.distance(currentCenter, targetCenter);
+
+    return !currentBounds.contains(bounds) || centerDistance > 40;
+  }
+
   autoFocus(features, shouldFocus) {
     if (!shouldFocus || features.length === 0) {
-      this.lastAutoFocusKey = "";
       return;
     }
-
-    const focusKey = features.map((feature) => feature.id).join("|");
-    if (focusKey === this.lastAutoFocusKey) {
-      return;
-    }
-
-    this.lastAutoFocusKey = focusKey;
 
     if (features.length === 1) {
       const [single] = features;
+
+      if (!this.shouldMoveToSingleFeature(single, 16)) {
+        return;
+      }
+
       this.map.flyTo([single.location.lat, single.location.lng], 16, {
         animate: true,
         duration: 0.35,
@@ -210,6 +232,11 @@ export class HawkerMapView {
     const bounds = L.latLngBounds(
       features.map((feature) => [feature.location.lat, feature.location.lng])
     );
+
+    if (!this.shouldMoveToBounds(bounds)) {
+      return;
+    }
+
     this.map.fitBounds(bounds.pad(0.2), {
       animate: true,
       duration: 0.35,
