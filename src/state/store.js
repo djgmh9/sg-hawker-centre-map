@@ -161,21 +161,6 @@ export class HawkerStore {
     });
   }
 
-  setSelectedFeatureId(featureId) {
-    this.dispatch({
-      type: HAWKER_ACTION_TYPES.SELECT_FEATURE,
-      payload: { featureId },
-      meta: { shouldPan: false, source: "store" },
-    });
-  }
-
-  applyFilter(text = "") {
-    this.dispatch({
-      type: HAWKER_ACTION_TYPES.APPLY_FILTER,
-      payload: { text },
-    });
-  }
-
   notify(action) {
     const state = this.getState();
     this.listeners.forEach((listener) => listener(state, action || null));
