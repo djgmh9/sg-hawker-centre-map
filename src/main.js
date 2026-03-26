@@ -11,8 +11,10 @@ import { renderStatusMessage } from "./ui/statusView.js";
 async function bootstrap() {
   const statusElement = document.getElementById("statusMessage");
   const searchInput = document.getElementById("searchInput");
+  const searchGuideElement = document.querySelector(".search-guide");
   const searchResultsElement = document.getElementById("searchResults");
-  const leftColumnElement = document.querySelector(".left-column");
+  const controlsElement = document.querySelector(".controls");
+  const mapElement = document.getElementById("map");
   const detailsPanelElement = document.querySelector(".details-panel");
   const store = new HawkerStore();
   const mapView = new HawkerMapView({
@@ -21,15 +23,39 @@ async function bootstrap() {
   });
 
   const syncDetailsPanelHeight = () => {
-    if (!leftColumnElement || !detailsPanelElement) {
+    if (!detailsPanelElement || !controlsElement || !mapElement) {
       return;
     }
 
-    detailsPanelElement.style.height = `${leftColumnElement.offsetHeight}px`;
+    const controlsHeight = Math.ceil(controlsElement.getBoundingClientRect().height);
+    const mapHeight = Math.ceil(mapElement.getBoundingClientRect().height);
+    detailsPanelElement.style.height = `${controlsHeight + mapHeight}px`;
   };
 
   syncDetailsPanelHeight();
   window.addEventListener("resize", syncDetailsPanelHeight);
+
+  if (searchGuideElement) {
+    searchGuideElement.addEventListener("toggle", () => {
+      syncDetailsPanelHeight();
+      mapView.map.invalidateSize({ pan: false, animate: false });
+    });
+  }
+
+  if (typeof ResizeObserver !== "undefined") {
+    const contentResizeObserver = new ResizeObserver(() => {
+      syncDetailsPanelHeight();
+      mapView.map.invalidateSize({ pan: false, animate: false });
+    });
+
+    if (controlsElement) {
+      contentResizeObserver.observe(controlsElement);
+    }
+
+    if (mapElement) {
+      contentResizeObserver.observe(mapElement);
+    }
+  }
 
   const dispatchFeatureSelection = (feature, meta = {}) => {
     store.dispatch({
