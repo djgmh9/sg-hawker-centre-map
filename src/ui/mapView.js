@@ -86,6 +86,26 @@ export class HawkerMapView {
         ? document.getElementById(detailsElementId)
         : null;
     this.selectedFeatureId = null;
+    this.markersByFeatureId = new Map();
+
+    const centeredAnchorOptions = {
+      tooltipAnchor: [0, -32],
+      popupAnchor: [0, -34],
+    };
+
+    // Keep Leaflet's built-in pin image while customizing interaction states.
+    this.baseMarkerIcon = new L.Icon.Default({
+      ...centeredAnchorOptions,
+      className: "hawker-marker",
+    });
+    this.hoverMarkerIcon = new L.Icon.Default({
+      ...centeredAnchorOptions,
+      className: "hawker-marker hawker-marker--hover",
+    });
+    this.selectedMarkerIcon = new L.Icon.Default({
+      ...centeredAnchorOptions,
+      className: "hawker-marker hawker-marker--selected",
+    });
 
     this.map = L.map(mapElementId, {
       zoomControl: true,
@@ -106,6 +126,34 @@ export class HawkerMapView {
 
     this.map.addLayer(this.clusterLayer);
     this.updateDetails(null);
+  }
+
+  setMarkerVisualState(marker, { selected = false, hovered = false } = {}) {
+    let icon = this.baseMarkerIcon;
+    let zIndexOffset = 0;
+
+    if (selected) {
+      icon = this.selectedMarkerIcon;
+      zIndexOffset = 300;
+    } else if (hovered) {
+      icon = this.hoverMarkerIcon;
+      zIndexOffset = 150;
+    }
+
+    if (marker.options.icon !== icon) {
+      marker.setIcon(icon);
+    }
+
+    marker.setZIndexOffset(zIndexOffset);
+  }
+
+  updateSelectedMarker(featureId) {
+    this.selectedFeatureId = featureId;
+    this.markersByFeatureId.forEach((marker, id) => {
+      this.setMarkerVisualState(marker, {
+        selected: id === this.selectedFeatureId,
+      });
+    });
   }
 
   updateDetails(feature) {
@@ -165,6 +213,7 @@ export class HawkerMapView {
 
   render(features, { shouldAutoFocus = false } = {}) {
     this.clusterLayer.clearLayers();
+    this.markersByFeatureId.clear();
 
     const selectedFeatureInView = this.findFeatureById(
       features,
@@ -179,7 +228,10 @@ export class HawkerMapView {
     const markers = features
       .map((feature) => {
         const { lat, lng } = feature.location;
-        const marker = L.marker([lat, lng]);
+        const marker = L.marker([lat, lng], {
+          icon: this.baseMarkerIcon,
+        });
+        const isSelected = feature.id === this.selectedFeatureId;
         const initialPlacement = this.getTooltipPlacement(lat, lng);
 
         marker.bindTooltip(tooltipHtml(feature.properties), {
@@ -200,13 +252,28 @@ export class HawkerMapView {
             );
           }
 
+          this.setMarkerVisualState(marker, {
+            selected: feature.id === this.selectedFeatureId,
+            hovered: true,
+          });
           marker.openTooltip();
         });
-        marker.on("mouseout", () => marker.closeTooltip());
-        marker.on("click", () => {
-          this.selectedFeatureId = feature.id;
-          this.updateDetails(feature);
+        marker.on("mouseout", () => {
+          this.setMarkerVisualState(marker, {
+            selected: feature.id === this.selectedFeatureId,
+          });
+          marker.closeTooltip();
         });
+        marker.on("click", () => {
+          this.updateSelectedMarker(feature.id);
+          this.updateDetails(feature);
+          marker.openTooltip();
+        });
+
+        this.setMarkerVisualState(marker, {
+          selected: isSelected,
+        });
+        this.markersByFeatureId.set(feature.id, marker);
 
         return marker;
       })

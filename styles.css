@@ -172,6 +172,29 @@ h1 {
   padding: 0.45rem 0.6rem;
 }
 
+.leaflet-marker-icon.hawker-marker {
+  transform-origin: 50% 100%;
+  transition: transform 150ms ease;
+}
+
+.leaflet-marker-icon.hawker-marker--hover {
+  transform: translateY(-3px) scale(1.14);
+  filter:
+    hue-rotate(315deg)
+    saturate(1.8)
+    brightness(1.03)
+    drop-shadow(0 8px 12px rgba(15, 123, 108, 0.45));
+}
+
+.leaflet-marker-icon.hawker-marker--selected {
+  transform: translateY(-4px) scale(1.2);
+  filter:
+    hue-rotate(140deg)
+    saturate(2.1)
+    brightness(1.08)
+    drop-shadow(0 10px 14px rgba(255, 107, 53, 0.58));
+}
+
 .tooltip-title {
   margin: 0;
   font-family: "DM Serif Display", serif;
