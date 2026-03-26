@@ -12,7 +12,7 @@ Detailed architecture documentation: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md
 - Fetch-once, filter-local state model
 - Case-insensitive search by hawker centre `NAME` or `ADDRESSPOSTALCODE`
 - Search by official region/area boundaries from local Master Plan 2019 GeoJSON files
-- Combined scope + keyword queries (for example: central + maxwell, bedok market)
+- Combined scope + keyword queries (for example: east tampines market, bedok market)
 - Dynamic marker updates while typing
 - Marker clustering with `leaflet.markercluster`
 - Boundary highlight overlay for matched region/area searches
@@ -25,24 +25,36 @@ Detailed architecture documentation: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md
 .
 ├── index.html
 ├── styles.css
+├── docs
+│   └── ARCHITECTURE.md
+├── server.py
 └── src
+    ├── data
+    │   ├── Master Plan 2019 Planning Area Boundary (No Sea).geojson
+    │   └── Master Plan 2019 Region Boundary (No Sea) (GEOJSON).geojson
 	├── main.js
 	├── services
-	│   └── apiService.js
+	│   ├── apiService.js
+	│   └── boundaryService.js
 	├── state
+	│   ├── featureNormalizer.js
+	│   ├── geoScope.js
 	│   └── store.js
 	└── ui
 		├── mapView.js
-		└── searchView.js
+		├── scopeOverlayView.js
+		├── searchView.js
+		└── statusView.js
 ```
 
-## Data Flow (2-Step Handshake)
+## Data Flow
 
-1. Request Poll-Download endpoint:
-   - `https://api-open.data.gov.sg/v1/public/api/datasets/d_4a086da0a5553be1d89383cd90d07ecd/poll-download`
-2. Read temporary `data.url` from the response.
-3. Fetch GeoJSON from that temporary URL.
-4. Normalize features and flip coordinates from `[lng, lat]` to `[lat, lng]` before rendering markers.
+1. Fetch hawker centres from the local proxy endpoint `/api/hawker-centres`.
+2. Load official region and planning-area boundaries from local GeoJSON files in `src/data`.
+3. Build scope index from boundary properties (`REGION_N`, `PLN_AREA_N`).
+4. Normalize hawker features from `[lng, lat]` to `[lat, lng]`.
+5. Resolve search query into optional scope + trailing text keyword.
+6. Filter by boundary geometry first, then by trailing keyword if present.
 
 ## Run Locally
 
