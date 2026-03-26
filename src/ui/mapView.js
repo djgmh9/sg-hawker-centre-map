@@ -141,7 +141,18 @@ export class HawkerMapView {
     };
 
     if (shouldPan) {
-      this.clusterLayer.zoomToShowLayer(marker, openMarkerTooltip);
+      const visibleParent = this.clusterLayer.getVisibleParent(marker);
+
+      if (visibleParent !== marker) {
+        this.clusterLayer.zoomToShowLayer(marker, openMarkerTooltip);
+        return;
+      }
+
+      this.map.panTo(marker.getLatLng(), {
+        animate: true,
+        duration: 0.25,
+      });
+      openMarkerTooltip();
       return;
     }
 

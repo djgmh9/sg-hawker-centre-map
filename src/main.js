@@ -39,6 +39,19 @@ async function bootstrap() {
     });
   };
 
+  const shouldAutoFocusForAction = (action, hasSearchText) => {
+    if (!hasSearchText) {
+      return false;
+    }
+
+    const type = action?.type;
+    return (
+      type === HAWKER_ACTION_TYPES.APPLY_FILTER ||
+      type === HAWKER_ACTION_TYPES.SET_MASTER_LIST ||
+      type === HAWKER_ACTION_TYPES.SET_GEO_SCOPE_INDEX
+    );
+  };
+
   let loading = true;
   let error = "";
 
@@ -46,14 +59,15 @@ async function bootstrap() {
     syncDetailsPanelHeight();
 
     const hasSearchText = Boolean(state.searchText.trim());
+    const shouldAutoFocus = shouldAutoFocusForAction(action, hasSearchText);
 
     mapView.render(state.filteredList, {
-      shouldAutoFocus: hasSearchText,
+      shouldAutoFocus,
       activeGeoScope: state.activeGeoScope,
       selectedFeatureId: state.selectedFeatureId,
-      onSelect: (feature, options = {}) => {
+      onSelect: (feature) => {
         dispatchFeatureSelection(feature, {
-          shouldPan: Boolean(options.shouldPan),
+          shouldPan: false,
           source: "map",
         });
       },
