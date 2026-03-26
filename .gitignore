@@ -5,7 +5,4 @@
 __pycache__/
 *.pyc
 
-# docs
-docs/
-
 README.md
