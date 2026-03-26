@@ -57,6 +57,18 @@ function detailsHtml(feature) {
 
   return `
     <h2 class="details-title">${name}</h2>
+    <p class="details-actions">
+      <a
+        class="details-map-link"
+        href="${mapsHref}"
+        target="_blank"
+        rel="noopener noreferrer"
+        accesskey="g"
+        aria-label="Open this hawker centre in Google Maps"
+      >
+        Open in Google Maps
+      </a>
+    </p>
     <dl class="details-grid">
       <div>
         <dt>Building</dt>
@@ -75,18 +87,6 @@ function detailsHtml(feature) {
         <dd>${location}</dd>
       </div>
     </dl>
-    <p class="details-actions">
-      <a
-        class="details-map-link"
-        href="${mapsHref}"
-        target="_blank"
-        rel="noopener noreferrer"
-        accesskey="g"
-        aria-label="Open this hawker centre in Google Maps"
-      >
-        Open in Google Maps
-      </a>
-    </p>
   `;
 }
 
