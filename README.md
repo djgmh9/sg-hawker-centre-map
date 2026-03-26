@@ -1,8 +1,13 @@
 # Singapore Hawker Centre Interactive Map
 
+
 ## Overview
 
 Interactive web map for Singapore hawker centres, backed by data.gov.sg GeoJSON data.
+
+## Screenshot
+
+![Hawker Centre Interactive Map](docs/images/hawker-centre-interactive-map.png)
 
 ### Approach and Architecture
 
