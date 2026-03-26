@@ -94,6 +94,7 @@ export class HawkerMapView {
         ? document.getElementById(detailsElementId)
         : null;
     this.selectedFeatureId = null;
+    this.lastAutoFocusKey = "";
     this.markersByFeatureId = new Map();
     this.markerStyleView = new MarkerStyleView();
 
@@ -196,8 +197,16 @@ export class HawkerMapView {
 
   autoFocus(features, shouldFocus) {
     if (!shouldFocus || features.length === 0) {
+      this.lastAutoFocusKey = "";
       return;
     }
+
+    const focusKey = features.map((feature) => feature.id).join("|");
+    if (focusKey === this.lastAutoFocusKey) {
+      return;
+    }
+
+    this.lastAutoFocusKey = focusKey;
 
     if (features.length === 1) {
       const [single] = features;
