@@ -124,7 +124,23 @@ export class HawkerMapView {
     });
   }
 
-  revealFeature(feature, { shouldPan = false } = {}) {
+  applyTooltipPlacement(marker) {
+    if (!marker) {
+      return;
+    }
+
+    const tooltip = marker.getTooltip();
+    if (!tooltip) {
+      return;
+    }
+
+    const { lat, lng } = marker.getLatLng();
+    const placement = this.getTooltipPlacement(lat, lng);
+    tooltip.options.direction = placement.direction;
+    tooltip.options.offset = L.point(placement.offset[0], placement.offset[1]);
+  }
+
+  revealFeature(feature, { shouldPan = false, waitForMapIdle = false } = {}) {
     if (!feature) {
       return;
     }
@@ -137,14 +153,28 @@ export class HawkerMapView {
     }
 
     const openMarkerTooltip = () => {
+      this.applyTooltipPlacement(marker);
       marker.openTooltip();
+    };
+
+    const openWhenReady = () => {
+      const isMapMoving =
+        Boolean(this.map._animatingZoom) ||
+        Boolean(this.map._panAnim && this.map._panAnim._inProgress);
+
+      if (waitForMapIdle && isMapMoving) {
+        this.map.once("moveend", openMarkerTooltip);
+        return;
+      }
+
+      openMarkerTooltip();
     };
 
     if (shouldPan) {
       const visibleParent = this.clusterLayer.getVisibleParent(marker);
 
       if (visibleParent !== marker) {
-        this.clusterLayer.zoomToShowLayer(marker, openMarkerTooltip);
+        this.clusterLayer.zoomToShowLayer(marker, openWhenReady);
         return;
       }
 
@@ -152,11 +182,16 @@ export class HawkerMapView {
         animate: true,
         duration: 0.25,
       });
-      openMarkerTooltip();
+
+      if (this.map._panAnim && this.map._panAnim._inProgress) {
+        this.map.once("moveend", openMarkerTooltip);
+      } else {
+        openMarkerTooltip();
+      }
       return;
     }
 
-    openMarkerTooltip();
+    openWhenReady();
   }
 
   updateDetails(feature) {
@@ -309,14 +344,17 @@ export class HawkerMapView {
       })
       .filter(Boolean);
 
+    this.autoFocus(features, shouldAutoFocus);
+
     this.clusterLayer.addLayers(markers);
 
     if (selectedFeatureInView) {
-      this.revealFeature(selectedFeatureInView, { shouldPan: false });
+      this.revealFeature(selectedFeatureInView, {
+        shouldPan: false,
+        waitForMapIdle: shouldAutoFocus,
+      });
     } else {
       this.closeAllTooltips();
     }
-
-    this.autoFocus(features, shouldAutoFocus);
   }
 }
