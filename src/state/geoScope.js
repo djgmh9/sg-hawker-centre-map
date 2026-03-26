@@ -148,76 +148,61 @@ function isPointInGeometry(lat, lng, geometry) {
   return false;
 }
 
-function removeFirstTerm(input, term) {
-  const index = input.indexOf(term);
-
-  if (index < 0) {
-    return input;
-  }
-
-  const before = input.slice(0, index).trim();
-  const after = input.slice(index + term.length).trim();
-  return `${before} ${after}`.trim().replace(/\s+/g, " ");
+function isWordBoundary(char) {
+  return char === undefined || char === " ";
 }
 
-function isCompatibleScope(activeGeoScope, candidateScope) {
-  if (!activeGeoScope || !candidateScope) {
-    return false;
-  }
+function collectScopeMatches(normalizedQuery, geoScopeIndex) {
+  const bestBySpan = new Map();
 
-  if (activeGeoScope.id === candidateScope.id) {
-    return true;
-  }
+  for (const { term, entryId, termLength } of geoScopeIndex.lookupTerms) {
+    const entry = geoScopeIndex.entriesById.get(entryId);
 
-  if (
-    activeGeoScope.type === "planning-area" &&
-    candidateScope.type === "region"
-  ) {
-    return candidateScope.name === activeGeoScope.regionName;
-  }
+    if (!entry) {
+      continue;
+    }
 
-  if (
-    activeGeoScope.type === "region" &&
-    candidateScope.type === "planning-area"
-  ) {
-    return candidateScope.regionName === activeGeoScope.name;
-  }
-
-  return false;
-}
-
-function stripCompatibleScopeTerms(residualKeyword, activeGeoScope, geoScopeIndex) {
-  if (!residualKeyword || !activeGeoScope || !geoScopeIndex) {
-    return residualKeyword;
-  }
-
-  let cleaned = residualKeyword;
-  let changed = true;
-
-  while (changed && cleaned) {
-    changed = false;
-    const wrapped = ` ${cleaned} `;
-
-    for (const { term, entryId } of geoScopeIndex.lookupTerms) {
-      if (!wrapped.includes(` ${term} `)) {
-        continue;
-      }
-
-      const candidateScope = geoScopeIndex.entriesById.get(entryId);
-      if (!isCompatibleScope(activeGeoScope, candidateScope)) {
-        continue;
-      }
-
-      const next = removeFirstTerm(cleaned, term);
-      if (next !== cleaned) {
-        cleaned = next;
-        changed = true;
+    let from = 0;
+    while (from < normalizedQuery.length) {
+      const start = normalizedQuery.indexOf(term, from);
+      if (start < 0) {
         break;
       }
+
+      const end = start + term.length;
+      const leftChar = start > 0 ? normalizedQuery[start - 1] : undefined;
+      const rightChar = end < normalizedQuery.length ? normalizedQuery[end] : undefined;
+
+      if (isWordBoundary(leftChar) && isWordBoundary(rightChar)) {
+        const key = `${start}:${end}`;
+        const current = bestBySpan.get(key);
+
+        if (!current || termLength > current.termLength) {
+          bestBySpan.set(key, {
+            term,
+            termLength,
+            start,
+            end,
+            entry,
+          });
+        }
+      }
+
+      from = start + 1;
     }
   }
 
-  return cleaned;
+  return [...bestBySpan.values()].sort((a, b) => {
+    if (a.start !== b.start) {
+      return a.start - b.start;
+    }
+
+    return b.termLength - a.termLength;
+  });
+}
+
+function trailingKeyword(normalizedQuery, endIndex) {
+  return normalizedQuery.slice(endIndex).trim().replace(/\s+/g, " ");
 }
 
 function toRegionEntry(feature) {
@@ -283,24 +268,32 @@ export function parseScopedSearch(query, geoScopeIndex) {
     };
   }
 
-  const wrappedQuery = ` ${normalizedQuery} `;
-  const match = geoScopeIndex.lookupTerms.find(({ term }) =>
-    wrappedQuery.includes(` ${term} `)
-  );
+  const matches = collectScopeMatches(normalizedQuery, geoScopeIndex);
+  const firstMatch = matches[0];
 
-  if (!match) {
+  if (!firstMatch) {
     return {
       activeGeoScope: null,
       residualKeyword: normalizedQuery,
     };
   }
 
-  const activeGeoScope = geoScopeIndex.entriesById.get(match.entryId) || null;
-  const residualKeyword = stripCompatibleScopeTerms(
-    removeFirstTerm(normalizedQuery, match.term),
-    activeGeoScope,
-    geoScopeIndex
-  );
+  let activeGeoScope = firstMatch.entry;
+  let residualKeyword = trailingKeyword(normalizedQuery, firstMatch.end);
+
+  if (firstMatch.entry.type === "region") {
+    const areaAfterRegion = matches.find(
+      (match) =>
+        match.start >= firstMatch.end &&
+        match.entry.type === "planning-area" &&
+        match.entry.regionName === firstMatch.entry.name
+    );
+
+    if (areaAfterRegion) {
+      activeGeoScope = areaAfterRegion.entry;
+      residualKeyword = trailingKeyword(normalizedQuery, areaAfterRegion.end);
+    }
+  }
 
   return {
     activeGeoScope,
