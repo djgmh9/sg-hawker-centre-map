@@ -23,7 +23,7 @@ body {
 
 .app-shell {
   width: min(1100px, 94vw);
-  margin: 2rem auto;
+  margin: 1.2rem auto;
   display: grid;
   gap: 1rem;
   animation: reveal 500ms ease-out;
@@ -34,7 +34,7 @@ body {
   backdrop-filter: blur(4px);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 1rem 1.25rem;
+  padding: 0.65rem 1rem;
 }
 
 .eyebrow {
@@ -49,21 +49,21 @@ body {
 h1 {
   margin: 0.2rem 0;
   font-family: "DM Serif Display", serif;
-  font-size: clamp(1.7rem, 2.8vw, 2.5rem);
+  font-size: clamp(1.35rem, 2.1vw, 1.95rem);
   line-height: 1.05;
 }
 
 .subtext {
   margin: 0;
   color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .controls {
   display: grid;
   gap: 0.4rem;
   background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  border-bottom: 1px solid var(--line);
   padding: 0.9rem 1.25rem 1.1rem;
 }
 
@@ -79,11 +79,16 @@ h1 {
   padding: 0.65rem 0.75rem;
   background: #fffefb;
   transition: border-color 170ms ease;
+  width: 100%;
 }
 
 .controls input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.search-input-wrap {
+  position: relative;
 }
 
 #statusMessage {
@@ -99,7 +104,76 @@ h1 {
   line-height: 1.3;
 }
 
-.map-wrap {
+.search-results {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.search-results-list {
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  grid-auto-rows: max-content;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffefb;
+  color: #2f2c23;
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  display: grid;
+  gap: 0.08rem;
+  cursor: pointer;
+}
+
+.search-result-item:hover {
+  border-color: rgba(15, 123, 108, 0.5);
+  background: #fff8ec;
+}
+
+.search-result-item:focus-visible {
+  outline: 2px solid rgba(15, 123, 108, 0.45);
+  outline-offset: 1px;
+}
+
+.search-result-item--active {
+  border-color: rgba(15, 123, 108, 0.72);
+  background: rgba(15, 123, 108, 0.1);
+}
+
+.search-result-title {
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.search-result-subtitle {
+  color: #6a604e;
+  font-size: 0.76rem;
+}
+
+.search-results-empty,
+.search-results-more {
+  margin: 0;
+  color: #6a604e;
+  font-size: 0.78rem;
+}
+
+.search-results-more {
+  margin-top: 0.35rem;
+}
+
+.workspace {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
   align-items: stretch;
@@ -107,6 +181,12 @@ h1 {
   overflow: hidden;
   border: 1px solid var(--line);
   box-shadow: 0 14px 34px rgba(79, 51, 19, 0.14);
+}
+
+.left-column {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 #map {
@@ -136,7 +216,38 @@ h1 {
 .details-panel {
   background: rgba(255, 251, 243, 0.96);
   border-left: 1px solid var(--line);
-  padding: 1rem;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-split {
+  min-height: 0;
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.panel-split--results {
+  grid-template-rows: auto minmax(0, 1fr);
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 251, 243, 0.9);
+  overflow: hidden;
+}
+
+.panel-split--details {
+  background: rgba(255, 251, 243, 0.98);
+  overflow-y: auto;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+
+.panel-title {
+  margin: 0;
+  font-family: "DM Serif Display", serif;
+  font-size: 1.03rem;
+  line-height: 1.1;
 }
 
 .details-title {
@@ -153,9 +264,9 @@ h1 {
 }
 
 .details-grid {
-  margin: 1rem 0 0;
+  margin: 0.6rem 0 0;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.45rem;
 }
 
 .details-grid div {
@@ -242,17 +353,18 @@ h1 {
     margin: 1rem auto;
   }
 
-  .map-wrap {
+  .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .left-column {
+    grid-template-rows: auto minmax(320px, 62vh);
   }
 
   .details-panel {
     border-left: 0;
     border-top: 1px solid var(--line);
-  }
-
-  #map {
-    height: 62vh;
+    grid-template-rows: minmax(180px, 40vh) minmax(220px, 1fr);
   }
 }
 

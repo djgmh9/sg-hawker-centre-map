@@ -44,28 +44,43 @@
         </p>
       </header>
 
-      <section class="controls" aria-label="Search and status panel">
-        <label for="searchInput">Search hawker centre</label>
-        <input
-          id="searchInput"
-          type="search"
-          placeholder="Try: Tiong Bahru or 168898"
-          autocomplete="off"
-        />
-        <p id="searchHint" class="search-hint">
-          Try scope searches: "central", "bedok", or "central + maxwell".
-        </p>
-        <p id="statusMessage" aria-live="polite">Loading hawker centres...</p>
-      </section>
+      <main class="workspace">
+        <section class="left-column">
+          <section class="controls" aria-label="Search and status panel">
+            <label for="searchInput">Search hawker centre</label>
+            <div class="search-input-wrap">
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Try: Tiong Bahru or 168898"
+                autocomplete="off"
+              />
+            </div>
+            <p id="searchHint" class="search-hint">
+              Try scope searches: "central", "bedok", or "central + maxwell".
+            </p>
+            <p id="statusMessage" aria-live="polite">Loading hawker centres...</p>
+          </section>
 
-      <main class="map-wrap">
-        <div id="map" role="region" aria-label="Singapore Hawker Centre map"></div>
+          <div id="map" role="region" aria-label="Singapore Hawker Centre map"></div>
+        </section>
+
         <aside
-          id="detailsPanel"
           class="details-panel"
-          aria-live="polite"
-          aria-label="Selected hawker centre details"
-        ></aside>
+          aria-label="Search results and selected hawker centre details"
+        >
+          <section class="panel-split panel-split--results" aria-label="Search results">
+            <h2 class="panel-title">Search Results</h2>
+            <div id="searchResults" class="search-results"></div>
+          </section>
+
+          <section
+            id="detailsContent"
+            class="panel-split panel-split--details"
+            aria-live="polite"
+            aria-label="Selected hawker centre details"
+          ></section>
+        </aside>
       </main>
     </div>
 

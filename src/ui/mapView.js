@@ -1,4 +1,5 @@
 import { ScopeOverlayView } from "./scopeOverlayView.js";
+import { MarkerStyleView } from "./markerStyleView.js";
 
 const SG_CENTER = [1.3521, 103.8198];
 const SG_ZOOM = 11;
@@ -89,25 +90,7 @@ export class HawkerMapView {
         : null;
     this.selectedFeatureId = null;
     this.markersByFeatureId = new Map();
-
-    const centeredAnchorOptions = {
-      tooltipAnchor: [0, -32],
-      popupAnchor: [0, -34],
-    };
-
-    // Keep Leaflet's built-in pin image while customizing interaction states.
-    this.baseMarkerIcon = new L.Icon.Default({
-      ...centeredAnchorOptions,
-      className: "hawker-marker",
-    });
-    this.hoverMarkerIcon = new L.Icon.Default({
-      ...centeredAnchorOptions,
-      className: "hawker-marker hawker-marker--hover",
-    });
-    this.selectedMarkerIcon = new L.Icon.Default({
-      ...centeredAnchorOptions,
-      className: "hawker-marker hawker-marker--selected",
-    });
+    this.markerStyleView = new MarkerStyleView();
 
     this.map = L.map(mapElementId, {
       zoomControl: true,
@@ -131,32 +114,48 @@ export class HawkerMapView {
     this.updateDetails(null);
   }
 
-  setMarkerVisualState(marker, { selected = false, hovered = false } = {}) {
-    let icon = this.baseMarkerIcon;
-    let zIndexOffset = 0;
-
-    if (selected) {
-      icon = this.selectedMarkerIcon;
-      zIndexOffset = 300;
-    } else if (hovered) {
-      icon = this.hoverMarkerIcon;
-      zIndexOffset = 150;
-    }
-
-    if (marker.options.icon !== icon) {
-      marker.setIcon(icon);
-    }
-
-    marker.setZIndexOffset(zIndexOffset);
-  }
-
   updateSelectedMarker(featureId) {
     this.selectedFeatureId = featureId;
     this.markersByFeatureId.forEach((marker, id) => {
-      this.setMarkerVisualState(marker, {
+      this.markerStyleView.apply(marker, {
         selected: id === this.selectedFeatureId,
       });
     });
+  }
+
+  focusFeature(feature, { shouldPan = false, targetZoom = 16 } = {}) {
+    if (!feature) {
+      return;
+    }
+
+    this.updateSelectedMarker(feature.id);
+    this.updateDetails(feature);
+
+    const marker = this.markersByFeatureId.get(feature.id);
+    if (!marker) {
+      return;
+    }
+
+    const openMarkerTooltip = () => {
+      marker.openTooltip();
+
+      if (!shouldPan) {
+        return;
+      }
+
+      const { lat, lng } = feature.location;
+      this.map.flyTo([lat, lng], Math.max(this.map.getZoom(), targetZoom), {
+        animate: true,
+        duration: 0.35,
+      });
+    };
+
+    if (shouldPan) {
+      this.clusterLayer.zoomToShowLayer(marker, openMarkerTooltip);
+      return;
+    }
+
+    openMarkerTooltip();
   }
 
   updateDetails(feature) {
@@ -233,7 +232,7 @@ export class HawkerMapView {
       .map((feature) => {
         const { lat, lng } = feature.location;
         const marker = L.marker([lat, lng], {
-          icon: this.baseMarkerIcon,
+          icon: this.markerStyleView.getBaseIcon(),
         });
         const isSelected = feature.id === this.selectedFeatureId;
         const initialPlacement = this.getTooltipPlacement(lat, lng);
@@ -256,25 +255,25 @@ export class HawkerMapView {
             );
           }
 
-          this.setMarkerVisualState(marker, {
+          this.markerStyleView.apply(marker, {
             selected: feature.id === this.selectedFeatureId,
             hovered: true,
           });
           marker.openTooltip();
         });
         marker.on("mouseout", () => {
-          this.setMarkerVisualState(marker, {
+          this.markerStyleView.apply(marker, {
             selected: feature.id === this.selectedFeatureId,
           });
           marker.closeTooltip();
         });
         marker.on("click", () => {
-          this.updateSelectedMarker(feature.id);
-          this.updateDetails(feature);
-          marker.openTooltip();
+          this.focusFeature(feature, {
+            shouldPan: false,
+          });
         });
 
-        this.setMarkerVisualState(marker, {
+        this.markerStyleView.apply(marker, {
           selected: isSelected,
         });
         this.markersByFeatureId.set(feature.id, marker);

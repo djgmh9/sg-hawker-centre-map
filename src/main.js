@@ -5,26 +5,54 @@ import { normalizeHawkerFeatures } from "./state/featureNormalizer.js";
 import { HawkerStore } from "./state/store.js";
 import { HawkerMapView } from "./ui/mapView.js";
 import { setupSearchView } from "./ui/searchView.js";
+import { renderSearchResults } from "./ui/searchResultsView.js";
 import { renderStatusMessage } from "./ui/statusView.js";
 
 async function bootstrap() {
   const statusElement = document.getElementById("statusMessage");
   const searchInput = document.getElementById("searchInput");
+  const searchResultsElement = document.getElementById("searchResults");
+  const leftColumnElement = document.querySelector(".left-column");
+  const detailsPanelElement = document.querySelector(".details-panel");
   const store = new HawkerStore();
   const mapView = new HawkerMapView({
     mapElementId: "map",
-    detailsElementId: "detailsPanel",
+    detailsElementId: "detailsContent",
   });
+
+  const syncDetailsPanelHeight = () => {
+    if (!leftColumnElement || !detailsPanelElement) {
+      return;
+    }
+
+    detailsPanelElement.style.height = `${leftColumnElement.offsetHeight}px`;
+  };
+
+  syncDetailsPanelHeight();
+  window.addEventListener("resize", syncDetailsPanelHeight);
 
   let loading = true;
   let error = "";
 
   store.subscribe((state) => {
+    syncDetailsPanelHeight();
+
     const hasSearchText = Boolean(state.searchText.trim());
 
     mapView.render(state.filteredList, {
       shouldAutoFocus: hasSearchText,
       activeGeoScope: state.activeGeoScope,
+    });
+
+    renderSearchResults(searchResultsElement, {
+      searchText: state.searchText,
+      features: state.filteredList,
+      selectedFeatureId: mapView.selectedFeatureId,
+      onSelect: (feature) => {
+        mapView.focusFeature(feature, {
+          shouldPan: true,
+        });
+      },
     });
 
     renderStatusMessage(statusElement, {
@@ -59,6 +87,7 @@ async function bootstrap() {
     error = err instanceof Error ? err.message : "Unknown error";
   } finally {
     loading = false;
+    syncDetailsPanelHeight();
     const state = store.getState();
     renderStatusMessage(statusElement, {
       loading,
