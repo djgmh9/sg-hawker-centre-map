@@ -42,14 +42,25 @@ async function bootstrap() {
     mapView.render(state.filteredList, {
       shouldAutoFocus: hasSearchText,
       activeGeoScope: state.activeGeoScope,
+      selectedFeatureId: state.selectedFeatureId,
+      onSelect: (feature, options = {}) => {
+        store.setSelectedFeatureId(feature.id);
+
+        if (options.shouldPan) {
+          mapView.revealFeature(feature, {
+            shouldPan: true,
+          });
+        }
+      },
     });
 
     renderSearchResults(searchResultsElement, {
       searchText: state.searchText,
       features: state.filteredList,
-      selectedFeatureId: mapView.selectedFeatureId,
+      selectedFeatureId: state.selectedFeatureId,
       onSelect: (feature) => {
-        mapView.focusFeature(feature, {
+        store.setSelectedFeatureId(feature.id);
+        mapView.revealFeature(feature, {
           shouldPan: true,
         });
       },

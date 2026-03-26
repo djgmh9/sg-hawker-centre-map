@@ -9,6 +9,7 @@ export class HawkerStore {
     this.geoScopeIndex = null;
     this.activeGeoScope = null;
     this.residualKeyword = "";
+    this.selectedFeatureId = null;
     this.listeners = new Set();
   }
 
@@ -28,6 +29,17 @@ export class HawkerStore {
     this.applyFilter(this.searchText);
   }
 
+  setSelectedFeatureId(featureId) {
+    const nextFeatureId = featureId || null;
+
+    if (this.selectedFeatureId === nextFeatureId) {
+      return;
+    }
+
+    this.selectedFeatureId = nextFeatureId;
+    this.notify();
+  }
+
   applyFilter(text = "") {
     this.searchText = text;
     const normalizedQuery = normalizeSearchText(text);
@@ -43,6 +55,11 @@ export class HawkerStore {
       this.activeGeoScope = null;
       this.residualKeyword = "";
       this.filteredList = [...this.masterList];
+      this.selectedFeatureId = this.masterList.some(
+        (centre) => centre.id === this.selectedFeatureId
+      )
+        ? this.selectedFeatureId
+        : null;
       this.notify();
       return;
     }
@@ -72,6 +89,10 @@ export class HawkerStore {
       );
     });
 
+    if (!this.filteredList.some((centre) => centre.id === this.selectedFeatureId)) {
+      this.selectedFeatureId = null;
+    }
+
     this.notify();
   }
 
@@ -87,6 +108,7 @@ export class HawkerStore {
       searchText: this.searchText,
       activeGeoScope: this.activeGeoScope,
       residualKeyword: this.residualKeyword,
+      selectedFeatureId: this.selectedFeatureId,
     };
   }
 }

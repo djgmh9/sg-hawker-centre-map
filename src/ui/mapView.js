@@ -93,7 +93,6 @@ export class HawkerMapView {
       typeof detailsElementId === "string"
         ? document.getElementById(detailsElementId)
         : null;
-    this.selectedFeatureId = null;
     this.markersByFeatureId = new Map();
     this.markerStyleView = new MarkerStyleView();
 
@@ -119,30 +118,18 @@ export class HawkerMapView {
     this.updateDetails(null);
   }
 
-  updateSelectedMarker(featureId) {
-    this.selectedFeatureId = featureId;
-    this.markersByFeatureId.forEach((marker, id) => {
-      this.markerStyleView.apply(marker, {
-        selected: id === this.selectedFeatureId,
-      });
-    });
-  }
-
   closeAllTooltips() {
     this.markersByFeatureId.forEach((marker) => {
       marker.closeTooltip();
     });
   }
 
-  focusFeature(feature, { shouldPan = false } = {}) {
+  revealFeature(feature, { shouldPan = false } = {}) {
     if (!feature) {
       return;
     }
 
     this.closeAllTooltips();
-
-    this.updateSelectedMarker(feature.id);
-    this.updateDetails(feature);
 
     const marker = this.markersByFeatureId.get(feature.id);
     if (!marker) {
@@ -244,20 +231,18 @@ export class HawkerMapView {
     });
   }
 
-  render(features, { shouldAutoFocus = false, activeGeoScope = null } = {}) {
+  render(features, {
+    shouldAutoFocus = false,
+    activeGeoScope = null,
+    selectedFeatureId = null,
+    onSelect = null,
+  } = {}) {
     this.clusterLayer.clearLayers();
     this.markersByFeatureId.clear();
     this.scopeOverlayView.render(activeGeoScope);
 
-    const selectedFeatureInView = this.findFeatureById(
-      features,
-      this.selectedFeatureId
-    );
-
-    if (!selectedFeatureInView) {
-      this.selectedFeatureId = null;
-      this.updateDetails(null);
-    }
+    const selectedFeatureInView = this.findFeatureById(features, selectedFeatureId);
+    this.updateDetails(selectedFeatureInView);
 
     const markers = features
       .map((feature) => {
@@ -265,7 +250,7 @@ export class HawkerMapView {
         const marker = L.marker([lat, lng], {
           icon: this.markerStyleView.getBaseIcon(),
         });
-        const isSelected = feature.id === this.selectedFeatureId;
+        const isSelected = feature.id === selectedFeatureId;
         const initialPlacement = this.getTooltipPlacement(lat, lng);
 
         marker.bindTooltip(tooltipHtml(feature.properties), {
@@ -287,21 +272,21 @@ export class HawkerMapView {
           }
 
           this.markerStyleView.apply(marker, {
-            selected: feature.id === this.selectedFeatureId,
+            selected: feature.id === selectedFeatureId,
             hovered: true,
           });
           marker.openTooltip();
         });
         marker.on("mouseout", () => {
           this.markerStyleView.apply(marker, {
-            selected: feature.id === this.selectedFeatureId,
+            selected: feature.id === selectedFeatureId,
           });
           marker.closeTooltip();
         });
         marker.on("click", () => {
-          this.focusFeature(feature, {
-            shouldPan: false,
-          });
+          if (typeof onSelect === "function") {
+            onSelect(feature, { shouldPan: false });
+          }
         });
 
         this.markerStyleView.apply(marker, {
@@ -314,6 +299,13 @@ export class HawkerMapView {
       .filter(Boolean);
 
     this.clusterLayer.addLayers(markers);
+
+    if (selectedFeatureInView) {
+      this.revealFeature(selectedFeatureInView, { shouldPan: false });
+    } else {
+      this.closeAllTooltips();
+    }
+
     this.autoFocus(features, shouldAutoFocus);
   }
 }
